@@ -1,12 +1,12 @@
 
 
 class CodeTree:
-    def __init__(self, funcs: list[str], calls: list[typle[str]]):
+    def __init__(self, funcs: list, calls: list):
         self.funcs = funcs
         self.calls = calls
 
 
-    def get_func_list(self) -> list[str]:
+    def get_func_list(self) -> list:
         """
         Returns list of strings - function names
         """
@@ -14,7 +14,7 @@ class CodeTree:
         return self.funcs[:]
 
 
-    def get_dep_list(self, func: str) -> list[str]:
+    def get_dep_list(self, func: str) -> list:
         """
         Returns list of function names that are called by func
         """
