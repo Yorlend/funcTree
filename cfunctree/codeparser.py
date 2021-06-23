@@ -1,6 +1,10 @@
+import os
 from cfunctree.codetree import CodeTree
+from pycparser import parse_file
 from pycparser.c_parser import CParser
-from pycparser.c_ast import FileAST, FuncDecl, FuncCall, FuncDef, NodeVisitor
+from pycparser.c_ast import NodeVisitor
+from tempfile import NamedTemporaryFile
+from pcpp import Preprocessor
 
 
 class CodeVisitor(NodeVisitor):
@@ -30,7 +34,29 @@ class CodeVisitor(NodeVisitor):
             self.visit(node.args)
 
 
+def preprocess(source: str) -> str:
+    pre = Preprocessor()
+    pre.add_path("./utils/fake_libc_include")
+    pre.add_path("/usr/include")
+    pre.parse(source)
+
+    tmpfile = NamedTemporaryFile("w", delete=False)
+    filename = tmpfile.name
+
+    pre.write(tmpfile)
+    tmpfile.close()
+
+    tmpfile = open(filename, "r")
+    source = tmpfile.read()
+    tmpfile.close()
+    os.remove(filename)
+
+    return source
+
+
 def parse_code(source: str) -> CodeTree:
+    source = preprocess(source)
+
     visitor = CodeVisitor()
     visitor.visit(CParser().parse(source))
 
