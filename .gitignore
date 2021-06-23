@@ -3,3 +3,5 @@
 build/**
 dist/**
 cfunctree.egg-info/**
+tests/out/**
+.eggs/**
