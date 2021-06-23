@@ -17,7 +17,7 @@ setup(
     test_suite='tests',
     entry_points={
         "console_scripts": [
-            "cfunctree = cfunctree.entrypoint:main"
+            "cfunctree = cfunctree.__main__:main"
         ]
     },
 )
