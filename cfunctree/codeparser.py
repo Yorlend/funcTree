@@ -1,4 +1,6 @@
 import os
+import importlib.resources
+from cfunctree import utils
 from cfunctree.codetree import CodeTree
 from pycparser import parse_file
 from pycparser.c_parser import CParser
@@ -36,8 +38,8 @@ class CodeVisitor(NodeVisitor):
 
 def preprocess(source: str) -> str:
     pre = Preprocessor()
-    pre.add_path("./utils/fake_libc_include")
-    pre.add_path("/usr/include")
+    pre.add_path(os.path.abspath(utils.__file__)[:-11] + 'fake_libc_include')
+    # pre.add_path("/usr/include")
     pre.parse(source)
 
     tmpfile = NamedTemporaryFile("w", delete=False)
