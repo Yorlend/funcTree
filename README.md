@@ -1,3 +1,4 @@
+## **This module uses graphviz**
 # Install
 `python setup.py install`
 # Usage
