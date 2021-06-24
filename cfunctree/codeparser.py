@@ -1,5 +1,4 @@
 import os
-import importlib.resources
 from cfunctree import utils
 from cfunctree.codetree import CodeTree
 from pycparser import parse_file
@@ -22,7 +21,10 @@ class CodeVisitor(NodeVisitor):
         return list(set(self.func_calls[:]))
 
     def visit_FuncDecl(self, node):
-        self.func_names.add(node.type.declname)
+        try:
+            self.func_names.add(node.type.declname)
+        except:
+            pass
 
     def visit_FuncDef(self, node):
         self.func_names.add(node.decl.name)
@@ -30,16 +32,22 @@ class CodeVisitor(NodeVisitor):
         self.visit(node.body)
 
     def visit_FuncCall(self, node):
-        self.func_names.add(node.name.name)
-        self.func_calls.append((self.curr_func, node.name.name))
+        if type(node.name.name) is str:
+            self.func_names.add(node.name.name)
+            self.func_calls.append((self.curr_func, node.name.name))
         if node.args:
             self.visit(node.args)
 
 
-def preprocess(source: str) -> str:
+def build_preprocessor() -> Preprocessor:
     pre = Preprocessor()
-    pre.add_path(os.path.abspath(utils.__file__)[:-11] + 'fake_libc_include')
-    # pre.add_path("/usr/include")
+    pre.add_path(os.path.abspath(utils.__file__)[:-11] + "fake_libc_include")
+    pre.add_path("/usr/include")
+    pre.add_path("/usr/local/include")
+    return pre
+
+
+def preprocess(source: str, pre: Preprocessor) -> str:
     pre.parse(source)
 
     tmpfile = NamedTemporaryFile("w", delete=False)
@@ -57,7 +65,8 @@ def preprocess(source: str) -> str:
 
 
 def parse_code(source: str) -> CodeTree:
-    source = preprocess(source)
+    pre = build_preprocessor()
+    source = preprocess(source, pre)
 
     visitor = CodeVisitor()
     visitor.visit(CParser().parse(source))
@@ -66,3 +75,24 @@ def parse_code(source: str) -> CodeTree:
     calls = visitor.get_calls()
 
     return CodeTree(funcs, calls)
+
+
+def parse_files(headers: list, sources: list) -> CodeTree:
+    funcs = set()
+    calls = []
+    for sourcefile in sources:
+        pre = build_preprocessor()
+        for header in headers:
+            pre.add_path(header.parent)
+        src = open(sourcefile, "r").read()
+        src = preprocess(src, pre)
+        try:
+            tree = parse_code(src)
+        except Exception as e:
+            print("could not parse file:", sourcefile)
+            print("error at", str(e))
+
+        funcs.update(tree.funcs)
+        calls.extend(tree.calls)
+
+    return CodeTree(list(funcs), calls)
