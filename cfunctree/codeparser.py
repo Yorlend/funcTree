@@ -79,7 +79,7 @@ def parse_code(source: str) -> CodeTree:
 
 def parse_files(headers: list, sources: list) -> CodeTree:
     funcs = set()
-    calls = []
+    calls = set()
     for sourcefile in sources:
         pre = build_preprocessor()
         for header in headers:
@@ -88,11 +88,10 @@ def parse_files(headers: list, sources: list) -> CodeTree:
         src = preprocess(src, pre)
         try:
             tree = parse_code(src)
+            funcs.update(tree.funcs)
+            calls.update(tree.calls)
         except Exception as e:
             print("could not parse file:", sourcefile)
             print("error at", str(e))
 
-        funcs.update(tree.funcs)
-        calls.extend(tree.calls)
-
-    return CodeTree(list(funcs), calls)
+    return CodeTree(list(funcs), list(calls))
